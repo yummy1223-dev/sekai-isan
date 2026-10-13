@@ -56,6 +56,7 @@
 <div class="filters">
   <select id="lvSel" aria-label="難易度"></select>
   <select id="catSel" aria-label="分野"></select>
+  <select id="srcSel" aria-label="出典（回）"></select>
   <button class="chip" id="ngBtn">間違いのみ</button>
   <button class="chip" id="shufBtn">問題シャッフル</button>
   <button class="chip on" id="cshufBtn">選択肢シャッフル</button>
@@ -125,7 +126,8 @@ function parseQuestions(text) {
     q: findCol(h, ['問題文', '問題']),
     c: [1, 2, 3, 4].map((n) => findCol(h, ['選択肢' + n, '選択' + n])),
     ans: findCol(h, ['正解', '答え']),
-    exp: findCol(h, ['解説'])
+    exp: findCol(h, ['解説']),
+    src: findCol(h, ['出典'])
   };
   if (col.q < 0 || col.ans < 0) throw new Error('見出し行に「問題文」「正解」の列が見つかりません');
   const get = (r, i) => (i >= 0 ? (r[i] || '').trim() : '');
@@ -140,7 +142,8 @@ function parseQuestions(text) {
     if (!q || choices.length < 2 || !choices.every(Boolean) || !(a >= 1 && a <= choices.length)) { skipped++; return; }
     const no = get(r, col.no);
     out.push({ id: no ? 'n' + no : 'q' + q, no, lv: parseInt(get(r, col.lv), 10) || 0,
-               cat: get(r, col.cat) || '未分類', q, choices, ans: a, exp: get(r, col.exp) });
+               cat: get(r, col.cat) || '未分類', q, choices, ans: a, exp: get(r, col.exp),
+               src: (get(r, col.src).split(/\s問/)[0] || '未設定') });
   });
   return { list: out, skipped };
 }
@@ -180,6 +183,8 @@ function start(qs) {
     lvs.map((n) => '<option value="' + n + '">難易度' + n + (LV_LABEL[n] ? '（' + LV_LABEL[n] + '）' : '') + '</option>').join('');
   const cats = [...new Set(all.map((x) => x.cat))];
   $('catSel').innerHTML = '<option value="all">すべての分野</option>' + cats.map((s) => '<option value="' + esc(s) + '">' + esc(s) + '</option>').join('');
+  const srcs = [...new Set(all.map((x) => x.src))];
+  $('srcSel').innerHTML = '<option value="all">すべての出典</option>' + srcs.map((s) => '<option value="' + esc(s) + '">' + esc(s) + '</option>').join('');
   rebuild();
 }
 
@@ -191,8 +196,8 @@ function getOrder(it) {
 }
 
 function rebuild() {
-  const lv = $('lvSel').value, c = $('catSel').value;
-  list = all.filter((x) => (lv === 'all' || x.lv === parseInt(lv, 10)) && (c === 'all' || x.cat === c) && (!onlyNg || rec[x.id] === 'ng'));
+  const lv = $('lvSel').value, c = $('catSel').value, sr = $('srcSel').value;
+  list = all.filter((x) => (lv === 'all' || x.lv === parseInt(lv, 10)) && (c === 'all' || x.cat === c) && (sr === 'all' || x.src === sr) && (!onlyNg || rec[x.id] === 'ng'));
   if (shuffleOn) shuffleArr(list);
   idx = 0; ans = {}; orders = {};
   render();
@@ -274,6 +279,7 @@ $('nextBtn').addEventListener('click', () => { idx++; render(); });
 $('prevBtn').addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
 $('lvSel').addEventListener('change', rebuild);
 $('catSel').addEventListener('change', rebuild);
+$('srcSel').addEventListener('change', rebuild);
 $('ngBtn').addEventListener('click', () => { onlyNg = !onlyNg; $('ngBtn').classList.toggle('on', onlyNg); rebuild(); });
 $('shufBtn').addEventListener('click', () => { shuffleOn = !shuffleOn; $('shufBtn').classList.toggle('on', shuffleOn); rebuild(); });
 $('cshufBtn').addEventListener('click', () => { choiceShuffle = !choiceShuffle; $('cshufBtn').classList.toggle('on', choiceShuffle); rebuild(); });
