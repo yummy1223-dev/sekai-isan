@@ -200,6 +200,8 @@ function rebuild() {
   list = all.filter((x) => (lv === 'all' || x.lv === parseInt(lv, 10)) && (c === 'all' || x.cat === c) && (sr === 'all' || x.src === sr) && (!onlyNg || rec[x.id] === 'ng'));
   if (shuffleOn) shuffleArr(list);
   idx = 0; ans = {}; orders = {};
+  // 順番どおり（シャッフルなし・間違いのみでもない）のときは、まだ解いていない最初の問題から再開する
+  if (!shuffleOn && !onlyNg) { const f = list.findIndex((x) => !rec[x.id]); if (f > 0) idx = f; }
   render();
 }
 
