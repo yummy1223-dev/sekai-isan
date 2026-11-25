@@ -73,6 +73,7 @@
 <div class="summary"><button class="chip" id="resetBtn">学習記録をリセット</button></div>
 
 <script>
+async function fetchRetry(u){let e;for(let i=0;i<3;i++){try{return await fetch(u);}catch(x){e=x;await new Promise(r=>setTimeout(r,800));}}throw e;}
 // ★ スプレッドシートを「ウェブに公開」したCSVのURLをここに貼る（空なら questions.csv を読む）
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTNsuXUWnz0bnzghXk6925RuPtEXoG0hdOLMa0TlHu7HRCx7DtrX0VQObYSTIDfmGqz_RTZbaqMAo5F/pub?gid=0&single=true&output=csv';
 const LOCAL_CSV = 'questions.csv';
@@ -154,7 +155,7 @@ function setStatus(msg, err) { const s = $('status'); s.textContent = msg; s.cla
 async function load() {
   const url = SHEET_CSV_URL ? SHEET_CSV_URL + (SHEET_CSV_URL.includes('?') ? '&' : '?') + 't=' + Date.now() : LOCAL_CSV;
   try {
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetchRetry(url);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
     const p = parseQuestions(text);
